@@ -9,6 +9,7 @@ A simple Python application for fetching stock data and generating trading recom
 - Generates BUY/SELL/HOLD signals based on MA crossovers
 - Stores data in SQLite database
 - Shows recent recommendations for configured stocks
+- Dashboard for visualizing stock data and recommendations using Streamlit
 
 ## Setup
 
@@ -20,7 +21,7 @@ source .venv/bin/activate
 
 ### Install required packages:
 ```bash
-pip install pandas yfinance
+pip install streamlit plotly pandas yfinance
 ```
 
 ## Usage
@@ -39,6 +40,16 @@ To view the latest recommendations for all configured stocks:
 ```bash
 python3 recommendate.py
 ```
+
+## Interactive Dashboard
+
+To launch the interactive dashboard:
+
+```bash
+streamlit run dashboard.py
+```
+
+
 
 ###  Configuration
 
