@@ -1,16 +1,19 @@
 import sqlite3
-import sys
 import pandas as pd
 
 from tickers import tickers
 
-def signal_to_label(signal):
-    if signal == 1:
-        return "BUY 📈"
-    elif signal == -1:
-        return "SELL 📉"
-    else:
-        return "HOLD 🤝"
+def signal_to_label(strength):
+    signal_map = {
+        3: "STRONG BUY 📈📈",
+        2: "BUY 📈",
+        1: "WEAK BUY 📈",
+        0: "NEUTRAL ↔️",
+        -1: "WEAK SELL 📉",
+        -2: "SELL 📉",
+        -3: "STRONG SELL 📉📉"
+    }
+    return signal_map.get(strength, "UNKNOWN ❓")
 
 def flatten_columns(df):
     new_columns = []
@@ -27,31 +30,28 @@ def see_recommendations(db_name, ticker):
     table_name = ticker.replace('.', '_')
 
     query = f"""
-    SELECT *
-    FROM {table_name}
-    ORDER BY Date DESC
-    LIMIT 10
+    SELECT name FROM sqlite_master 
+    WHERE type='table' AND name='{table_name}'
     """
-    df = pd.read_sql_query(query, conn)
-    conn.close()
+    if not pd.read_sql_query(query, conn).empty:
+        df = pd.read_sql_query(f"SELECT * FROM {table_name} ORDER BY Date DESC LIMIT 10", conn)
+        conn.close()
 
-    df = flatten_columns(df)
+        df = flatten_columns(df)
 
-    print(f"Available columns: {list(df.columns)}")
+        print("\nAvailable columns:", df.columns.tolist())
 
-    selected_cols = []
-    for col in ['Close', 'Adj Close', 'MA5', 'MA20', 'Signal', 'Date']:
-        if col in df.columns:
-            selected_cols.append(col)
+        required_cols = ['Date', 'Close', 'MA_Diff', 'Signal_Strength']
+        if not all(col in df.columns for col in required_cols):
+            print(f"Missing required columns. Please run update.py first.")
+            return
 
-    df = df[selected_cols]
+        df['Recommendation'] = df['Signal_Strength'].apply(signal_to_label)
 
-    if 'Signal' in df.columns:
-        df['Recommendation'] = df['Signal'].apply(signal_to_label)
-
-    print("\n📈 Last 10 Recommendations:\n")
-    print(df[['Date', *[col for col in selected_cols if col != 'Date'], 'Recommendation']])
-
+        print("\n📈 Last 10 Recommendations:\n")
+        print(df[['Date', 'Close', 'MA_Diff', 'Signal_Strength', 'Recommendation']])
+    else:
+        print(f"No data found for {ticker}. Please run update.py first.")
 
 
 if __name__ == "__main__":

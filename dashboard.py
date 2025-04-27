@@ -17,10 +17,13 @@ def load_data(ticker):
 
 
 def plot_stock(df, ticker):
-    fig = make_subplots(rows=2, cols=1,
+    fig = make_subplots(rows=3, cols=1,
                         shared_xaxes=True,
                         vertical_spacing=0.03,
-                        subplot_titles=(f'{ticker} Price and Moving Averages', 'Trading Signals'))
+                        row_heights=[0.5, 0.25, 0.25],
+                        subplot_titles=(f'{ticker} Price and Moving Averages',
+                                        'Signal Strength',
+                                        'MA Difference %'))
 
     fig.add_trace(go.Scatter(x=df['Date'], y=df['Close'],
                              mode='lines',
@@ -37,30 +40,47 @@ def plot_stock(df, ticker):
                              name='MA20',
                              line=dict(color='#FFA500')), row=1, col=1)
 
-    fig.add_trace(go.Scatter(x=df['Date'], y=df['Signal'],
-                             mode='lines',
-                             name='Signal',
-                             line=dict(color='#2CA02C')), row=2, col=1)
+    fig.add_trace(go.Bar(x=df['Date'],
+                         y=df['Signal_Strength'],
+                         name='Signal Strength',
+                         marker_color=df['Signal_Strength'].map({
+                             3: 'darkgreen',
+                             2: 'lightgreen',
+                             1: 'palegreen',
+                             0: 'gray',
+                             -1: 'pink',
+                             -2: 'lightcoral',
+                             -3: 'darkred'
+                         })), row=2, col=1)
 
-    buy_signals = df[df['Signal'] == 1]
-    fig.add_trace(go.Scatter(x=buy_signals['Date'],
-                             y=buy_signals['Close'],
+    fig.add_trace(go.Scatter(x=df['Date'],
+                             y=df['MA_Diff'],
+                             name='MA Difference %',
+                             fill='tozeroy',
+                             line=dict(color='purple')), row=3, col=1)
+
+    strong_buy = df[df['Signal_Strength'] >= 2]
+    fig.add_trace(go.Scatter(x=strong_buy['Date'],
+                             y=strong_buy['Close'],
                              mode='markers',
-                             name='Buy Signal',
-                             marker=dict(color='green', size=10, symbol='triangle-up'),
+                             name='Strong Buy',
+                             marker=dict(color='darkgreen', size=12, symbol='triangle-up'),
                              showlegend=True), row=1, col=1)
 
-    sell_signals = df[df['Signal'] == -1]
-    fig.add_trace(go.Scatter(x=sell_signals['Date'],
-                             y=sell_signals['Close'],
+    strong_sell = df[df['Signal_Strength'] <= -2]
+    fig.add_trace(go.Scatter(x=strong_sell['Date'],
+                             y=strong_sell['Close'],
                              mode='markers',
-                             name='Sell Signal',
-                             marker=dict(color='red', size=10, symbol='triangle-down'),
+                             name='Strong Sell',
+                             marker=dict(color='darkred', size=12, symbol='triangle-down'),
                              showlegend=True), row=1, col=1)
 
-    fig.update_layout(height=800,
+    fig.update_layout(height=1000,
                       title_text=f"{ticker} Stock Analysis",
                       showlegend=True)
+
+    fig.update_yaxes(title_text="Signal Strength (-3 to +3)", row=2, col=1)
+    fig.update_yaxes(title_text="MA Diff %", row=3, col=1)
 
     return fig
 
@@ -81,22 +101,41 @@ def main():
         df = load_data(ticker_symbol)
 
         last_row = df.iloc[-1]
-        cols = st.columns(3)
+        cols = st.columns(4)
 
         cols[0].metric("Last Close Price", f"${last_row['Close']:.2f}")
 
-        signal_map = {1: "BUY 📈", -1: "SELL 📉", 0: "HOLD 🤝"}
-        cols[1].metric("Current Signal", signal_map[last_row['Signal']])
+        signal_strength_map = {
+            3: "STRONG BUY 📈📈",
+            2: "BUY 📈",
+            1: "WEAK BUY 📈",
+            0: "NEUTRAL ↔️",
+            -1: "WEAK SELL 📉",
+            -2: "SELL 📉",
+            -3: "STRONG SELL 📉📉"
+        }
+
+        cols[1].metric("Signal Strength",
+                       signal_strength_map[last_row['Signal_Strength']])
+
+        cols[2].metric("MA Difference",
+                       f"{last_row['MA_Diff']:.2f}%")
 
         price_change = last_row['Close'] - df.iloc[-2]['Close']
-        cols[2].metric("Price Change", f"${price_change:.2f}",
+        cols[3].metric("Price Change",
+                       f"${price_change:.2f}",
                        f"{(price_change / df.iloc[-2]['Close'] * 100):.2f}%")
 
         fig = plot_stock(df, ticker_symbol)
         st.plotly_chart(fig, use_container_width=True)
 
+        st.subheader("Signal Distribution (Last 30 Days)")
+        recent_signals = df.tail(30)['Signal_Strength'].value_counts().sort_index()
+        st.bar_chart(recent_signals)
+
         st.subheader("Recent Data")
-        st.dataframe(df.tail().sort_index(ascending=False))
+        display_cols = ['Date', 'Close', 'MA5', 'MA20', 'MA_Diff', 'Signal_Strength']
+        st.dataframe(df[display_cols].tail().sort_index(ascending=False))
 
     except Exception as e:
         st.error(f"Error loading data for {ticker_symbol}: {e}")
