@@ -21,7 +21,7 @@ source .venv/bin/activate
 
 ### Install required packages:
 ```bash
-pip install streamlit plotly pandas yfinance
+pip install streamlit plotly pandas yfinance snowflake-connector-python python-dotenv
 ```
 
 ## Usage

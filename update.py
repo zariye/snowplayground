@@ -1,9 +1,8 @@
-from datetime import date
-
+from db import update_db
 from tickers import tickers
 import yfinance as yf
 import logging
-import sqlite3
+
 import pandas as pd
 
 def calculate_signals(df):
@@ -24,18 +23,18 @@ def update_stock_data(ticker):
     try:
         stock = yf.Ticker(ticker)
         df = stock.history(period='1y')
+        # df = yf.download(ticker, period='1mo')
 
         if df.empty:
             print(f"No data found for {ticker}")
             return
 
         df = calculate_signals(df)
+        df.reset_index()
 
-        conn = sqlite3.connect('stocks.db')
-        table_name = ticker.replace('.', '_')
-        df.to_sql(table_name, conn, if_exists='replace')
-        conn.close()
+        # print(df.columns)
 
+        update_db(df, ticker)
         print(f"Updated {ticker} successfully")
 
     except Exception as e:
