@@ -2,3 +2,9 @@
 .idea
 __pycache__
 stocks.db
+
+## Terraform
+*/.terraform
+*terraform.tfvars
+*tfstate*
+.terraform.lock.hcl
