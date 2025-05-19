@@ -1,40 +1,45 @@
-from snow import update
+from snow import Snowflake
 from tickers import tickers
 import yfinance as yf
 import logging
 
 import pandas as pd
 
-def calculate_signals(df):
-    df['MA5'] = df['Close'].rolling(window=5).mean()
-    df['MA20'] = df['Close'].rolling(window=20).mean()
+class Update:
+    def __init__(self):
+        self.snow = Snowflake()
 
-    df['MA_Diff'] = ((df['MA5'] - df['MA20']) / df['MA20']) * 100
+    def stock_data(self, ticker):
+        try:
+            stock = yf.Ticker(ticker)
+            df = stock.history(period='1y')
 
-    df['Signal_Strength'] = pd.cut(
-        df['MA_Diff'],
-        bins=[-float('inf'), -5, -2, -0.5, 0.5, 2, 5, float('inf')],
-        labels=[-3, -2, -1, 0, 1, 2, 3]
-    ).astype(float)
+            if df.empty:
+                logging.error(f"No data found for {ticker}")
+                return
 
-    return df
+            df = self.calculate_signals(df)
+            df.reset_index()
 
-def update_stock_data(ticker):
-    try:
-        stock = yf.Ticker(ticker)
-        df = stock.history(period='1y')
+            self.snow.update(df, ticker)
 
-        if df.empty:
-            logging.error(f"No data found for {ticker}")
-            return
+        except Exception as e:
+            logging.error(f"Error updating {ticker}: {e}")
 
-        df = calculate_signals(df)
-        df.reset_index()
+    @staticmethod
+    def calculate_signals(df):
+        df['MA5'] = df['Close'].rolling(window=5).mean()
+        df['MA20'] = df['Close'].rolling(window=20).mean()
 
-        update(df, ticker)
+        df['MA_Diff'] = ((df['MA5'] - df['MA20']) / df['MA20']) * 100
 
-    except Exception as e:
-        logging.error(f"Error updating {ticker}: {e}")
+        df['Signal_Strength'] = pd.cut(
+            df['MA_Diff'],
+            bins=[-float('inf'), -5, -2, -0.5, 0.5, 2, 5, float('inf')],
+            labels=[-3, -2, -1, 0, 1, 2, 3]
+        ).astype(float)
+
+        return df
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
@@ -42,7 +47,8 @@ if __name__ == "__main__":
     for ticker in tickers.values():
         logging.info(f"Processing {ticker}... ")
         try:
-            update_stock_data(ticker)
+            update = Update()
+            update.stock_data(ticker)
             logging.info(f"{ticker} done!\n")
         except Exception as e:
             logging.error(f"Failed for {ticker}: {e}\n")
