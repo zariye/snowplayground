@@ -1,63 +1,80 @@
-import sqlite3
+from db import connect_to_snowflake
 import pandas as pd
+import logging
+import sys
 
-from tickers import tickers
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 
-def signal_to_label(strength):
-    signal_map = {
-        3: "STRONG BUY 📈📈",
-        2: "BUY 📈",
-        1: "WEAK BUY 📈",
-        0: "NEUTRAL ↔️",
-        -1: "WEAK SELL 📉",
-        -2: "SELL 📉",
-        -3: "STRONG SELL 📉📉"
-    }
-    return signal_map.get(strength, "UNKNOWN ❓")
+def get_recommendations(days=3):
+    logging.info("Connecting to Snowflake...")
+    conn = connect_to_snowflake()
+    cs = conn.cursor()
 
-def flatten_columns(df):
-    new_columns = []
-    for col in df.columns:
-        if isinstance(col, tuple):
-            new_columns.append("_".join([str(c) for c in col if c]))  # join non-empty parts
-        else:
-            new_columns.append(col)
-    df.columns = new_columns
-    return df
+    cs.execute("SHOW TABLES IN SCHEMA STOCKDATA.PUBLIC")
+    ticker_tables = [row[1] for row in cs.fetchall()]
+    logging.info(f"Found {len(ticker_tables)} tables: {ticker_tables}")
 
-def see_recommendations(db_name, ticker):
-    conn = sqlite3.connect(db_name)
-    table_name = ticker.replace('.', '_')
+    recommendations = []
 
-    query = f"""
-    SELECT name FROM sqlite_master 
-    WHERE type='table' AND name='{table_name}'
-    """
-    if not pd.read_sql_query(query, conn).empty:
-        df = pd.read_sql_query(f"SELECT * FROM {table_name} ORDER BY Date DESC LIMIT 10", conn)
-        conn.close()
+    for ticker in ticker_tables:
+        safe_ticker = f'"PUBLIC"."{ticker}"' if '.' in ticker else f'"PUBLIC".{ticker}'
 
-        df = flatten_columns(df)
+        cs.execute(f"""
+            SELECT Date, Close, Signal_Strength 
+            FROM {safe_ticker}
+            ORDER BY Date DESC
+            LIMIT {days}
+        """)
 
-        print("\nAvailable columns:", df.columns.tolist())
+        results = cs.fetchall()
+        if results:
+            latest_date, latest_close, latest_signal = results[0]
 
-        required_cols = ['Date', 'Close', 'MA_Diff', 'Signal_Strength']
-        if not all(col in df.columns for col in required_cols):
-            print(f"Missing required columns. Please run update.py first.")
+            if latest_signal >= 2:
+                status = "BUY"
+            elif latest_signal <= -2:
+                status = "SELL"
+            else:
+                status = "HOLD"
+
+            recommendations.append({
+                'ticker': ticker,
+                'date': latest_date,
+                'price': latest_close,
+                'signal': latest_signal,
+                'status': status
+            })
+
+    cs.close()
+    conn.close()
+
+    return pd.DataFrame(recommendations)
+
+
+def see_recommendations():
+    logging.info("Getting recommendations...")
+    try:
+        df = get_recommendations()
+
+        if df.empty:
+            logging.info("No recommendations available.")
             return
 
-        df['Recommendation'] = df['Signal_Strength'].apply(signal_to_label)
+        df['abs_signal'] = df['signal'].abs()
+        df = df.sort_values(by=['abs_signal', 'ticker'], ascending=[False, True])
+        df = df.drop(columns=['abs_signal'])
 
-        print("\n📈 Last 10 Recommendations:\n")
-        print(df[['Date', 'Close', 'MA_Diff', 'Signal_Strength', 'Recommendation']])
-    else:
-        print(f"No data found for {ticker}. Please run update.py first.")
+        logging.info("\n--- STOCK RECOMMENDATIONS ---\n")
+        for _, row in df.iterrows():
+            logging.info(f"{row['ticker']}: {row['status']} (Signal: {row['signal']}) - ${row['price']:.2f} on {row['date']}")
+
+    except Exception as e:
+        logging.error(f"Error retrieving recommendations: {str(e)}")
 
 
 if __name__ == "__main__":
-    for ticker_name in tickers.values():
-        print(f"Processing {ticker_name}... 🚀")
-        try:
-            see_recommendations("stocks.db", ticker_name)
-        except Exception as e:
-            print(f"Failed for {ticker_name}: {e}\n")
+    see_recommendations()
