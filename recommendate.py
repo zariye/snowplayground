@@ -1,4 +1,4 @@
-from db import connect_to_snowflake
+from snowflake import connect
 import pandas as pd
 import logging
 import sys
@@ -11,7 +11,7 @@ logging.basicConfig(
 
 def get_recommendations(days=3):
     logging.info("Connecting to Snowflake...")
-    conn = connect_to_snowflake()
+    conn = connect()
     cs = conn.cursor()
 
     cs.execute("SHOW TABLES IN SCHEMA STOCKDATA.PUBLIC")

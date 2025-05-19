@@ -4,8 +4,8 @@ import os
 import  pandas as pd
 
 
-def update_db(df, ticker):
-    conn = connect_to_snowflake()
+def update(df, ticker):
+    conn = connect()
     cs = conn.cursor()
 
     create_table(cs, ticker)
@@ -15,7 +15,7 @@ def update_db(df, ticker):
     conn.close()
 
 
-def connect_to_snowflake():
+def connect():
     load_dotenv()
     conn = snowflake.connector.connect(
         user=os.getenv('USER'),

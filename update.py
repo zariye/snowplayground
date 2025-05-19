@@ -1,4 +1,4 @@
-from db import update_db
+from snow import update
 from tickers import tickers
 import yfinance as yf
 import logging
@@ -31,7 +31,7 @@ def update_stock_data(ticker):
         df = calculate_signals(df)
         df.reset_index()
 
-        update_db(df, ticker)
+        update(df, ticker)
 
     except Exception as e:
         logging.error(f"Error updating {ticker}: {e}")
