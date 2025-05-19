@@ -23,22 +23,18 @@ def update_stock_data(ticker):
     try:
         stock = yf.Ticker(ticker)
         df = stock.history(period='1y')
-        # df = yf.download(ticker, period='1mo')
 
         if df.empty:
-            print(f"No data found for {ticker}")
+            logging.error(f"No data found for {ticker}")
             return
 
         df = calculate_signals(df)
         df.reset_index()
 
-        # print(df.columns)
-
         update_db(df, ticker)
-        print(f"Updated {ticker} successfully")
 
     except Exception as e:
-        print(f"Error updating {ticker}: {e}")
+        logging.error(f"Error updating {ticker}: {e}")
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
