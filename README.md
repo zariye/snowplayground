@@ -1,17 +1,12 @@
-# Stock Pipeline
+# Stock Pipeline & snowflake playground
 
-A simple Python application for fetching stock data and generating trading recommendations based on moving average crossovers.
+This is a sample project to demonstrate a stock data pipeline that fetches historical stock data, calculates moving averages, generates trading recommendations, and visualizes the results using Streamlit.
 
-## Features
+In the subfolder car_specs there is another example to play with different features of Snowflake, such as analyzing  linage.
 
-- Fetches historical stock data from Yahoo Finance
-- Calculates 5-day and 20-day moving averages
-- Generates BUY/SELL/HOLD signals based on MA crossovers
-- Stores data in SQLite database
-- Shows recent recommendations for configured stocks
-- Dashboard for visualizing stock data and recommendations using Streamlit
+----
 
-## Setup
+## Setup Stock Pipeline
 
 ### Create a virtual environment:
 ```bash
@@ -49,16 +44,6 @@ To launch the interactive dashboard:
 streamlit run dashboard.py
 ```
 
-## Sync with Snowflake
-using the `abctl` tool, you can sync your GitHub repository with Snowflake.
-
-```bash
-curl -LsfS https://get.airbyte.com | bash -
-abctl local install
-abctl local credentials
-```
-
-
 ###  Configuration
 
 Stock tickers are configured in tickers.py. Add or remove stocks by modifying the tickers dictionary:
@@ -69,4 +54,16 @@ tickers = {
     'AMD': 'AMD',
     # Add more stocks here
 }
+```
+
+--- 
+## Snowflake Playground
+
+## Sync with Snowflake
+using the `abctl` tool, you can sync your GitHub repository with Snowflake.
+
+```bash
+curl -LsfS https://get.airbyte.com | bash -
+abctl local install
+abctl local credentials
 ```
