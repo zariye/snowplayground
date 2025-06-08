@@ -59,7 +59,7 @@ tickers = {
 --- 
 ## Snowflake Playground
 
-## Sync with Snowflake
+### Sync with Snowflake
 using the `abctl` tool, you can sync your GitHub repository with Snowflake.
 
 ```bash

@@ -9,3 +9,5 @@ stocks.db
 *terraform.tfvars
 *tfstate*
 .terraform.lock.hcl
+
+playground/.streamlit
