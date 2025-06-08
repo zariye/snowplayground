@@ -49,6 +49,14 @@ To launch the interactive dashboard:
 streamlit run dashboard.py
 ```
 
+## Sync with Snowflake
+using the `abctl` tool, you can sync your GitHub repository with Snowflake.
+
+```bash
+curl -LsfS https://get.airbyte.com | bash -
+abctl local install
+abctl local credentials
+```
 
 
 ###  Configuration
