@@ -1,5 +1,5 @@
 .venv
-.idea
+*.idea
 __pycache__
 stocks.db
 .env
@@ -11,3 +11,6 @@ stocks.db
 .terraform.lock.hcl
 
 playground/.streamlit
+playground/snowpipe-streaming/target
+
+**key**
