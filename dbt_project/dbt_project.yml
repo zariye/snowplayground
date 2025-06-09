@@ -34,3 +34,9 @@ models:
     # Config indicated by + and applies to all files under models/example/
     example:
       +materialized: view
+
+seeds:
+  dbt_project:
+    country_codes:
+      schema: RAW
+      quote_columns: false

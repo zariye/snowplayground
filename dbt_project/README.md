@@ -3,8 +3,11 @@ Welcome to your new dbt project!
 ### Using the starter project
 
 Try running the following commands:
-- dbt run
-- dbt test
+- `dbt run`
+- `dbt test`
+  - built-in and custom tests in tests/
+- `dbt seeds`
+  - to load csv files into database tables and
 
 
 ### Resources:
