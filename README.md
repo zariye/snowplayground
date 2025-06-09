@@ -2,7 +2,7 @@
 
 This is a sample project to demonstrate a stock data pipeline that fetches historical stock data, calculates moving averages, generates trading recommendations, and visualizes the results using Streamlit.
 
-In the subfolder car_specs there is another example to play with different features of Snowflake, such as analyzing  linage.
+In the subfolder playground is another example to play with different features of Snowflake, such as analyzing linage or streaming.
 
 ----
 
