@@ -5,12 +5,12 @@ stocks.db
 .env
 
 ## Terraform
-*/.terraform
+stockpipeline/iac/.terraform
 *terraform.tfvars
 *tfstate*
 .terraform.lock.hcl
 
-playground/.streamlit
-playground/snowpipe-streaming/target
+*/.streamlit
+snowpipe-streaming/target
 
 **key**
