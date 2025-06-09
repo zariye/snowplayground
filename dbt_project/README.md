@@ -8,6 +8,10 @@ Try running the following commands:
   - built-in and custom tests in tests/
 - `dbt seeds`
   - to load csv files into database tables and
+- analyze
+  - `dbt compile`
+  - `snowsql -q "$(cat target/compiled/dbt_project/analyses/country_distribution.sql)"` or snowsight worksheet
+  - to analyze the project and generate documentation
 
 
 ### Resources:
